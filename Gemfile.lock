@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/conjurinc/conjur-policy-parser.git
-  revision: 5894aa46dd765a7de97abb7358294842becac9c9
+  revision: a7bfb1f516bf90c96f78a822f80dd753c4702c8d
   branch: policy-factory
   specs:
     conjur-policy-parser (3.0.3)
