@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Sequel.split_symbols = true
-Sequel.extension :core_extensions, :postgres_schemata
+Sequel.extension :core_extensions, :postgres_schemata, :pg_advisory_locking
 Sequel::Model.plugin :validation_helpers
 
 class Sequel::Model

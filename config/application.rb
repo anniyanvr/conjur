@@ -38,7 +38,7 @@ module Possum
     config.autoload_paths << Rails.root.join('lib')
 
     config.sequel.after_connect = proc do
-      Sequel.extension :core_extensions, :postgres_schemata
+      Sequel.extension :core_extensions, :postgres_schemata, :pg_advisory_locking
       Sequel::Model.db.extension :pg_array, :pg_inet, :pg_hstore
     rescue
       raise unless is_asset_precompile?
