@@ -1,0 +1,32 @@
+section:
+  description: Tools to ensure your applications have access to the privileged systems they need.
+  categories:
+  - name: Secretless Broker
+    description: Secure your apps by making them Secretless.
+    repos:
+      - name: cyberark/secretless-broker
+        url: https://github.com/cyberark/secretless-broker
+        description: Secretless Broker
+        #thumb: CyberArk_Conjur_logo.svg
+        #image-alt:
+  - name: Summon
+    description: Get your secrets into source code.
+    repos:
+      - name: cyberark/summon
+        url: https://github.com/cyberark/summon
+        description: Summon
+      - name: cyberark/summon-aws-secrets
+        url: https://github.com/cyberark/summon-aws-secrets
+        description: Summon provider for AWS Secrets Manager
+      - name: cyberark/summon-s3
+        url: https://github.com/cyberark/summon-s3
+        description: Summon provider for AWS S3
+      - name: cyberark/summon-conjur
+        url: https://github.com/cyberark/summon-conjur
+        description: Summon provider for Conjur
+      - name: cyberark/summon-chefapi
+        url: https://github.com/cyberark/summon-chefapi
+        description: Summon provider for Chef encrypted data bags
+      - name: cyberark/summon-keyring
+        url: https://github.com/cyberark/summon-keyring
+        description: Cross-platform provider for Summon that talks to keyrings
