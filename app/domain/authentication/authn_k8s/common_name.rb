@@ -48,7 +48,7 @@ module Authentication
       end
 
       def host_name_suffix
-        @host_name_parts ||= full_host_name.last(3)
+        @host_name_suffix ||= full_host_name.last(3)
       end
 
       def full_host_name

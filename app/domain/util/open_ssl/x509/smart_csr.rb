@@ -29,8 +29,8 @@ module Util
           smart_subject.common_name
         end
 
-        def set_common_name(cn)
-          smart_subject.set_common_name(cn)
+        def common_name=(common_name)
+          smart_subject.common_name = common_name
         end
 
         def updated_subject

@@ -56,11 +56,10 @@ module Authentication
       # To maintain backwards compatibility we update the CSR's common_name
       # to have the full host-id.
       def update_csr_common_name
-        if @common_name_type != "full"
-          host_id_prefix = "host.conjur.authn-k8s.#{@service_id}.apps."
-          cn =  host_id_prefix + smart_csr.common_name
-          smart_csr.set_common_name(cn)
-        end
+        return unless @common_name_type != "full"
+        host_id_prefix = "host.conjur.authn-k8s.#{@service_id}.apps."
+        cn =  host_id_prefix + smart_csr.common_name
+        smart_csr.common_name = cn
       end
 
       def pod_request

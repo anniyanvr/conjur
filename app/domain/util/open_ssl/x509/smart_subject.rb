@@ -9,12 +9,12 @@ module Util
           parts['CN']
         end
 
-        def set_common_name(cn)
-          parts['CN'] = cn
+        def common_name=(common_name)
+          parts['CN'] = common_name
         end
 
         def to_s
-          parts.map{|k,v| "#{k}=#{v}" }.join(',')
+          parts.map{|k, v| "#{k}=#{v}" }.join(',')
         end
 
         private
