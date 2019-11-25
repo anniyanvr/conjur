@@ -12,6 +12,7 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
   let(:service_id) { "ServiceName" }
   let(:common_name) { "CommonName.#{spiffe_namespace}.Controller.Id" }
   let(:common_name_type) { "full" }
+  let(:nil_common_name_type) { nil }
   let(:csr) { "CSR" }
 
   let(:host_id) { "HostId" }
@@ -264,7 +265,15 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
                              common_name_type: common_name_type) }.to_not raise_error
         end
 
-        it "throws no errors if copy is sucessful and error stream is empty string" do
+        it "updates the common_name and throws no errors when the Common-Name-Type parameter doesn't exist" do
+          expect(smart_csr_mock).to receive(:common_name=)
+          expect{ injector.(conjur_account: account,
+                            service_id: service_id,
+                            csr: csr,
+                            common_name_type: nil_common_name_type) }.to_not raise_error
+        end
+
+        it "throws no errors if copy is successful and error stream is empty string" do
           allow(copy_response).to receive(:[])
             .with(:error)
             .and_return("")
