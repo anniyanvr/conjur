@@ -11,6 +11,7 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
   let(:account) { "SomeAccount" }
   let(:service_id) { "ServiceName" }
   let(:common_name) { "CommonName.#{spiffe_namespace}.Controller.Id" }
+  let(:common_name_type) { "full" }
   let(:csr) { "CSR" }
 
   let(:host_id) { "HostId" }
@@ -80,7 +81,7 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
       .and_return(ca_for_webservice)
 
     allow(ca_for_webservice).to receive(:signed_cert)
-      .with(csr, hash_including(
+      .with(smart_csr, hash_including(
         subject_altnames: [ spiffe_altname ]))
       .and_return(webservice_signed_cert)
 
@@ -91,7 +92,7 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
       .to receive(:from_csr)
       .with(hash_including(account: account,
                            service_name: service_id,
-                           csr: csr))
+                           csr: smart_csr))
       .and_return(k8s_host)
 
     allow(Util::OpenSsl::X509::SmartCsr)
@@ -145,7 +146,8 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
 
         expect { injector.(conjur_account: account,
                            service_id: service_id,
-                           csr: csr) }.to raise_error(error_type, missing_spiffe_id_error)
+                           csr: csr,
+                           common_name_type: common_name_type) }.to raise_error(error_type, missing_spiffe_id_error)
       end
 
       it "throws CSRNamespaceMismatch when common_name does not match spiffe_id.namespace" do
@@ -159,7 +161,8 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
 
         expect { injector.(conjur_account: account,
                            service_id: service_id,
-                           csr: csr) }.to raise_error(error_type, wrong_cn_error)
+                           csr: csr,
+                           common_name_type: common_name_type) }.to raise_error(error_type, wrong_cn_error)
       end
     end
 
@@ -173,7 +176,8 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
 
       expect { injector.(conjur_account: account,
                          service_id: service_id,
-                         csr: csr) }.to raise_error(RuntimeError, pod_validation_error)
+                         csr: csr,
+                         common_name_type: common_name_type) }.to raise_error(RuntimeError, pod_validation_error)
     end
 
     context "when cert is being installed" do
@@ -219,7 +223,8 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
 
         expect { injector.(conjur_account: account,
                            service_id: service_id,
-                           csr: csr) }.to raise_error(RuntimeError, expected_error_text)
+                           csr: csr,
+                           common_name_type: common_name_type) }.to raise_error(RuntimeError, expected_error_text)
       end
 
       it "throws CertInstallationError if copy response error stream is not empty" do
@@ -233,7 +238,8 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
 
         expect { injector.(conjur_account: account,
                            service_id: service_id,
-                           csr: csr) }.to raise_error(error_type, expected_full_error_text)
+                           csr: csr,
+                           common_name_type: common_name_type) }.to raise_error(error_type, expected_full_error_text)
       end
 
       it "throws CertInstallationError if copy response error stream is just whitespace" do
@@ -246,14 +252,16 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
 
         expect { injector.(conjur_account: account,
                            service_id: service_id,
-                           csr: csr) }.to raise_error(error_type, expected_full_error_text)
+                           csr: csr,
+                           common_name_type: common_name_type) }.to raise_error(error_type, expected_full_error_text)
       end
 
       context "and is successfully copied" do
         it "throws no errors if copy is sucessful and error stream is nil" do
           expect { injector.(conjur_account: account,
                              service_id: service_id,
-                             csr: csr) }.to_not raise_error
+                             csr: csr,
+                             common_name_type: common_name_type) }.to_not raise_error
         end
 
         it "throws no errors if copy is sucessful and error stream is empty string" do
@@ -263,7 +271,8 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
 
           expect { injector.(conjur_account: account,
                              service_id: service_id,
-                             csr: csr) }.to_not raise_error
+                             csr: csr,
+                             common_name_type: common_name_type) }.to_not raise_error
         end
 
         it "uses policy-defined container name if set" do
@@ -287,7 +296,8 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
 
           expect { injector.(conjur_account: account,
                              service_id: service_id,
-                             csr: csr) }.to_not raise_error
+                             csr: csr,
+                             common_name_type: common_name_type) }.to_not raise_error
         end
       end
     end
