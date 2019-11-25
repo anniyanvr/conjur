@@ -46,7 +46,7 @@ class AuthenticateController < ApplicationController
   def authenticate
     authn_token = Authentication::Authenticate.new.(
       authenticator_input: authenticator_input,
-        authenticators: installed_authenticators
+      authenticators: installed_authenticators
     )
     render json: authn_token
   rescue => e
@@ -90,9 +90,10 @@ class AuthenticateController < ApplicationController
     # TODO: add this to initializer
     Authentication::AuthnK8s::InjectClientCert.new.(
       conjur_account: ENV['CONJUR_ACCOUNT'],
-        service_id: params[:service_id],
-        csr: request.body.read,
-        common_name_type: request.headers["Common-Name-Type"]
+      service_id: params[:service_id],
+      csr: request.body.read,
+      # indicates whether the common-name includes the full host-id or not
+      common_name_type: request.headers["Common-Name-Type"]
     )
     head :ok
   rescue => e

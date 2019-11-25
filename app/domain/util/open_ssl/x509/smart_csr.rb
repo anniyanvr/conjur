@@ -33,7 +33,8 @@ module Util
           smart_subject.common_name = common_name
         end
 
-        def updated_subject
+        # We don't just return subject as it might have been updated
+        def subject_to_s
           smart_subject.to_s
         end
 

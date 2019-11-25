@@ -57,9 +57,11 @@ module Authentication
       # to have the full host-id.
       def update_csr_common_name
         return unless @common_name_type != "full"
-        host_id_prefix = "host.conjur.authn-k8s.#{@service_id}.apps."
-        cn =  host_id_prefix + smart_csr.common_name
-        smart_csr.common_name = cn
+        smart_csr.common_name = host_id_prefix + smart_csr.common_name
+      end
+
+      def host_id_prefix
+        "host.conjur.authn-k8s.#{@service_id}.apps."
       end
 
       def pod_request
