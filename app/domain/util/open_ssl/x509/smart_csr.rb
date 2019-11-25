@@ -29,6 +29,14 @@ module Util
           smart_subject.common_name
         end
 
+        def set_common_name(cn)
+          smart_subject.set_common_name(cn)
+        end
+
+        def updated_subject
+          smart_subject.to_s
+        end
+
         private
 
         def smart_subject
