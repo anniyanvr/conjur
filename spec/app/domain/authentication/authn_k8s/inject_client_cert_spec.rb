@@ -41,13 +41,13 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
                                        namespace: spiffe_namespace,
                                        to_altname: spiffe_altname) }
 
-  let(:smart_csr) { double("SmartCSR", common_name: common_name,
+  let(:smart_csr_mock) { double("SmartCSR", common_name: common_name,
                                        spiffe_id: spiffe_id) }
 
-  let(:bad_spiffe_smart_csr) { double("SmartCSR", common_name: common_name,
+  let(:bad_spiffe_smart_csr_mock) { double("SmartCSR", common_name: common_name,
                                                   spiffe_id: nil) }
 
-  let(:bad_cn_namespace_smart_csr) {
+  let(:bad_cn_namespace_smart_csr_mock) {
     double("SmartCSR",
       common_name: "CommonName.WrongNamespace.Controller.Id",
       spiffe_id: spiffe_id)
@@ -81,7 +81,7 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
       .and_return(ca_for_webservice)
 
     allow(ca_for_webservice).to receive(:signed_cert)
-      .with(smart_csr, hash_including(
+      .with(smart_csr_mock, hash_including(
         subject_altnames: [ spiffe_altname ]))
       .and_return(webservice_signed_cert)
 
@@ -92,13 +92,13 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
       .to receive(:from_csr)
       .with(hash_including(account: account,
                            service_name: service_id,
-                           csr: smart_csr))
+                           csr: smart_csr_mock))
       .and_return(k8s_host)
 
     allow(Util::OpenSsl::X509::SmartCsr)
       .to receive(:new)
       .with(csr)
-      .and_return(smart_csr)
+      .and_return(smart_csr_mock)
 
     allow(Authentication::AuthnK8s::SpiffeId)
       .to receive(:new)
@@ -142,7 +142,7 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
         allow(Util::OpenSsl::X509::SmartCsr)
           .to receive(:new)
           .with(csr)
-          .and_return(bad_spiffe_smart_csr)
+          .and_return(bad_spiffe_smart_csr_mock)
 
         expect { injector.(conjur_account: account,
                            service_id: service_id,
@@ -157,7 +157,7 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
         allow(Util::OpenSsl::X509::SmartCsr)
           .to receive(:new)
           .with(csr)
-          .and_return(bad_cn_namespace_smart_csr)
+          .and_return(bad_cn_namespace_smart_csr_mock)
 
         expect { injector.(conjur_account: account,
                            service_id: service_id,
@@ -257,7 +257,7 @@ RSpec.describe Authentication::AuthnK8s::InjectClientCert do
       end
 
       context "and is successfully copied" do
-        it "throws no errors if copy is sucessful and error stream is nil" do
+        it "throws no errors if copy is successful and error stream is nil" do
           expect { injector.(conjur_account: account,
                              service_id: service_id,
                              csr: csr,
