@@ -23,7 +23,7 @@ module Authentication
         :k8s_host_name
 
       def self.from_csr(account:, service_name:, csr:)
-        cn = Util::OpenSsl::X509::SmartCsr.new(csr).common_name
+        cn = csr.common_name
         raise ArgumentError, 'CSR must have a CN entry' unless cn
 
         new(account: account, service_name: service_name, common_name: cn)

@@ -91,7 +91,8 @@ class AuthenticateController < ApplicationController
     Authentication::AuthnK8s::InjectClientCert.new.(
       conjur_account: ENV['CONJUR_ACCOUNT'],
         service_id: params[:service_id],
-        csr: request.body.read
+        csr: request.body.read,
+        common_name_type: request.headers["Common-Name-Type"]
     )
     head :ok
   rescue => e
