@@ -43,7 +43,7 @@ module Authentication
       end
 
       def conjur_host_id
-        host_id_prefix + '/' + host_name
+        "#{@account}:" + host_name.sub('host/', 'host:')
       end
 
       def host_name
@@ -65,11 +65,6 @@ module Authentication
           pod service_account deployment stateful_set deployment_config
         )
       end
-
-      def host_id_prefix
-        "#{@account}:host:conjur/authn-k8s/#{@service_name}/apps"
-      end
-
     end
   end
 end
