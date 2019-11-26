@@ -22,3 +22,6 @@ Feature: An authorized client can login as a permitted role
 
   Scenario: Login as a StatefulSet.
     Then I can login to authn-k8s as "stateful_set/inventory-stateful"
+
+  Scenario: Login with a full host-id.
+    Then I can login to authn-k8s as full host-id "host/some-policy/@namespace@/*/*"

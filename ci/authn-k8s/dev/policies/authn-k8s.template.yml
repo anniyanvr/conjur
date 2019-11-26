@@ -91,3 +91,17 @@
   - !grant
     role: !group clients
     member: !layer apps
+
+# This policy is for testing that we can authenticate from any policy branch
+- !policy
+  id: some-policy
+  body:
+  - !host
+    id: {{CONJUR_AUTHN_K8S_TEST_NAMESPACE}}/*/*
+    annotations:
+      kubernetes/authentication-container-name: authenticator
+
+# Permit the host above to authenticate with authn-k8s
+- !grant
+  role: !group conjur/authn-k8s/minikube/clients
+  member: !host some-policy/{{CONJUR_AUTHN_K8S_TEST_NAMESPACE}}/*/*

@@ -1,13 +1,16 @@
-def login username, request_ip, authn_k8s_host, pkey
+def login username, request_ip, authn_k8s_host, pkey, headers = {}
   csr = gen_csr(username, pkey, [
     "URI:spiffe://cluster.local/namespace/#{@pod.metadata.namespace}/pod/#{@pod.metadata.name}"
   ])
 
+  headers[:content_type] = 'text/plain'
+
   response =
     RestClient::Resource.new(
       authn_k8s_host,
-      ssl_ca_file: './nginx.crt'
-    )["inject_client_cert?request_ip=#{request_ip}"].post(csr.to_pem, content_type: 'text/plain')
+      ssl_ca_file: './nginx.crt',
+      headers: headers
+    )["inject_client_cert?request_ip=#{request_ip}"].post(csr.to_pem)
 
   @cert = pod_certificate
 
@@ -18,11 +21,22 @@ def login username, request_ip, authn_k8s_host, pkey
   response
 end
 
-def login_with_id request_ip, id, success
+def login_with_relative_id request_ip, id, success
   username = [ namespace, id ].join('/')
+  login_with_username(request_ip, username, success)
+end
+
+def login_with_full_id request_ip, id, success
+  headers = { 'Common-Name-Type' => 'full' }
+  username = substitute(id)
+
+  login_with_username(request_ip, username, success, headers)
+end
+
+def login_with_username request_ip, username, success, headers = {}
   begin
     @pkey = OpenSSL::PKey::RSA.new 1048
-    login(username, request_ip, authn_k8s_host, @pkey)
+    login(username, request_ip, authn_k8s_host, @pkey, headers)
   rescue
     raise if success
     @error = $!
@@ -31,16 +45,26 @@ def login_with_id request_ip, id, success
   expect(@cert).to include("BEGIN CERTIFICATE") unless @cert.to_s.empty?
 end
 
-Then(/^I( can)? login to pod matching "([^"]*)" to authn-k8s as "([^"]*)"$/) do |success, objectid, host_id|
+Then(/^I( can)? login to pod matching "([^"]*)" to authn-k8s as( full host-id)? "([^"]*)"$/) do |success, objectid, is_full_host_id, host_id|
   @request_ip ||= find_matching_pod(objectid)
 
-  login_with_id(@request_ip, host_id, success)
+  if is_full_host_id
+    login_with_full_id(@request_ip, host_id, success)
+  else
+    login_with_relative_id(@request_ip, host_id, success)
+  end
 end
 
-Then(/^I( can)? login to authn-k8s as "([^"]*)"$/) do |success, objectid|
-  @request_ip ||= detect_request_ip(objectid)
-
-  login_with_id(@request_ip, objectid, success)
+Then(/^I( can)? login to authn-k8s as( full host-id)? "([^"]*)"$/) do |success, is_full_host_id, objectid|
+  if is_full_host_id
+    # we take only the object type and id
+    objectid_suffix = objectid.split('/').last(2).join('/')
+    @request_ip ||= detect_request_ip(objectid_suffix)
+    login_with_full_id(@request_ip, objectid, success)
+  else
+    @request_ip ||= detect_request_ip(objectid)
+    login_with_relative_id(@request_ip, objectid, success)
+  end
 end
 
 When(/^I launch many concurrent login requests$/) do
