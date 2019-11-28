@@ -32,14 +32,16 @@ function finish {
     touch output/gke-authn-k8s-logs.txt  # so Jenkins artifact collection doesn't fail
   }
 
+
+  echo "NOT ACTUALLY CLEANING UP, JUST ECHOING"
   echo 'Removing namespace $CONJUR_AUTHN_K8S_TEST_NAMESPACE'
   echo '-----'
-  kubectl --ignore-not-found=true delete namespace $CONJUR_AUTHN_K8S_TEST_NAMESPACE
+  echo kubectl --ignore-not-found=true delete namespace $CONJUR_AUTHN_K8S_TEST_NAMESPACE
 
-  delete_image $CONJUR_TEST_AUTHN_K8S_TAG
-  delete_image $CONJUR_AUTHN_K8S_TAG
-  delete_image $INVENTORY_TAG
-  delete_image $NGINX_TAG
+  echo delete_image $CONJUR_TEST_AUTHN_K8S_TAG
+  echo delete_image $CONJUR_AUTHN_K8S_TAG
+  echo delete_image $INVENTORY_TAG
+  echo delete_image $NGINX_TAG
 }
 trap finish EXIT
 
