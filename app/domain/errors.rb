@@ -286,6 +286,10 @@ unless defined? Errors::Authentication::AuthenticatorNotFound
           code: "CONJ00048E"
         )
       end
+
+      module AuthnAzure
+
+      end
     end
 
     module Util
