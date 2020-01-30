@@ -12,19 +12,15 @@ SECTION 1: Apache License 2.0
 >>> https://rubygems.org/gems/aws-sdk-iam/versions/1.4.0
 >>> https://rubygems.org/gems/conjur-api/versions/5.1.0
 
-SECTION 2: BSD 2-clause "Simplified" License
 
-
-
-
-SECTION 3: BSD 3-clause "New" or "Revised" License
+SECTION 2: BSD 3-clause "New" or "Revised" License
 
 >>> https://rubygems.org/gems/puma/versions/3.12.2
 >>> https://rubygems.org/gems/pg/versions/0.20.0
 >>> https://rubygems.org/gems/ffi/versions/1.9.25
 
 
-SECTION 4: MIT License
+SECTION 3: MIT License
 
 >>> https://rubygems.org/gems/command_class/versions/0.0.2
 >>> https://rubygems.org/gems/base58/versions/0.2.3
@@ -63,11 +59,7 @@ SECTION 4: MIT License
 >>> https://rubygems.org/gems/bcrypt-ruby/versions/3.0.1
 
 
-
-SECTION 5: Mozilla Public License 2.0
-
-
-SECTION 6: Gems with no License
+SECTION 4: Gems with no/unknown License
 >>> https://rubygems.org/gems/base32-crockford/versions/0.1.0
 >>> https://rubygems.org/gems/random_password_generator/versions/1.0.0
 
@@ -76,16 +68,13 @@ APPENDIX: Standard License Files and Templates
 
 >>> Apache License 2.0
 
->>> BSD 2-clause "Simplified" License
+>>> BSD 2-clause "Simplified" License 
 
 >>> BSD 3-clause "New" or "Revised" License
 
 >>> MIT License
 
 >>> Mozilla Public License 2.0
-
-
-
 
 
 
@@ -538,12 +527,8 @@ Apache License
    See the License for the specific language governing permissions and
    limitations under the License.
 
---------------- SECTION 2: BSD 2-clause "Simplified" License ----------
 
-BSD 2-clause "Simplified" License is applicable to the following component(s).
-
-
---------------- SECTION 3: BSD 3-clause "New" or "Revised" License ----------
+--------------- SECTION 2: BSD 3-clause "New" or "Revised" License ----------
 
 BSD 3-clause "New" or "Revised" License is applicable to the following component(s).
 
@@ -625,7 +610,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
---------------- SECTION 4: MIT License ----------
+--------------- SECTION 3: MIT License ----------
 
 MIT License is applicable to the following component(s).
 
@@ -1089,13 +1074,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
 CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-
---------------- SECTION 5: Mozilla Public License 2.0 ----------
-
-Mozilla Public License 2.0 is applicable to the following component(s).
-
 
 
 
