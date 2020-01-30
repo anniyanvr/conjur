@@ -60,13 +60,16 @@ SECTION 4: MIT License
 >>> https://rubygems.org/gems/conjur-rack-heartbeat/versions/2.0.0
 >>> https://rubygems.org/gems/rack-rewrite/versions/1.5.1
 >>> https://rubygems.org/gems/coffee-rails
+>>> https://rubygems.org/gems/bcrypt-ruby/versions/3.0.1
 
 
 
 SECTION 5: Mozilla Public License 2.0
 
--
 
+SECTION 6: Gems with no License
+>>> https://rubygems.org/gems/base32-crockford/versions/0.1.0
+>>> https://rubygems.org/gems/random_password_generator/versions/1.0.0
 
 
 APPENDIX: Standard License Files and Templates
@@ -1056,6 +1059,36 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+>>> https://rubygems.org/gems/bcrypt-ruby/versions/3.0.1
+
+(The MIT License)
+
+Copyright 2007-2011:
+
+* Coda Hale <coda.hale@gmail.com>
+
+C implementation of the BCrypt algorithm by Solar Designer and placed in the
+public domain.
+jBCrypt is Copyright (c) 2006 Damien Miller <djm@mindrot.org>.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 
