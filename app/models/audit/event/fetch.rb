@@ -1,12 +1,12 @@
 module Audit
   module Event
-    # Note: Breaking this class up further would harm clarity.
+    # NOTE: Breaking this class up further would harm clarity.
     # :reek:TooManyInstanceVariables and :reek:TooManyParameters
     class Fetch
       def initialize(
         user:,
         client_ip:,
-        resource:,
+        resource_id:,
         success:,
         version:,
         operation:,
@@ -14,14 +14,14 @@ module Audit
       )
         @user = user
         @client_ip = client_ip
-        @resource = resource
+        @resource_id = resource_id
         @success = success
         @error_message = error_message
         @version = version
         @operation = operation
       end
 
-      # Note: We want this class to be responsible for providing `progname`.
+      # NOTE: We want this class to be responsible for providing `progname`.
       # At the same time, `progname` is currently always "conjur" and this is
       # unlikely to change.  Moving `progname` into the constructor now
       # feels like premature optimization, so we ignore reek here.
@@ -77,13 +77,18 @@ module Audit
       private
 
       def resource_description
-        resource_id = @resource.id
-        @version ? "version #{@version} of #{resource_id}" : resource_id
+        @version ? versioned_resource_description : @resource_id
+      end
+
+      def versioned_resource_description
+        "version #{@version} of #{@resource_id}"
       end
 
       def subject_sd_value
-        { resource: @resource.id }.tap do |sd|
-          sd[:version] = @version if @version
+        { resource: @resource_id }.tap do |sd|
+          if @version
+            sd[:version] = @version
+          end
         end
       end
 

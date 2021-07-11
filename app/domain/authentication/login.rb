@@ -15,8 +15,7 @@ module Authentication
     },
     inputs: %i[authenticator_input authenticators enabled_authenticators]
   ) do
-
-    extend Forwardable
+    extend(Forwardable)
     def_delegators(
       :@authenticator_input, :authenticator_name, :account, :username,
       :webservice, :role, :client_ip
@@ -41,7 +40,7 @@ module Authentication
     end
 
     def key
-      @key = authenticator.login(@authenticator_input)
+      @key ||= authenticator.login(@authenticator_input)
     end
 
     def validate_authenticator_exists

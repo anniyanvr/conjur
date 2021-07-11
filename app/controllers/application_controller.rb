@@ -44,6 +44,7 @@ class ApplicationController < ActionController::API
   end
 
   rescue_from Exceptions::RecordNotFound, with: :record_not_found
+  rescue_from Errors::Conjur::MissingSecretValue, with: :render_secret_not_found
   rescue_from Exceptions::RecordExists, with: :record_exists
   rescue_from Exceptions::Forbidden, with: :forbidden
   rescue_from BadRequest, with: :bad_request
@@ -61,6 +62,7 @@ class ApplicationController < ActionController::API
   rescue_from ArgumentError, with: :argument_error
   rescue_from ActionController::ParameterMissing, with: :argument_error
   rescue_from UnprocessableEntity, with: :unprocessable_entity
+  rescue_from Errors::Conjur::BadSecretEncoding, with: :bad_secret_encoding
 
   around_action :run_with_transaction
 
@@ -73,31 +75,29 @@ class ApplicationController < ActionController::API
   private
 
   # Wrap the request in a transaction.
-  def run_with_transaction
-    Sequel::Model.db.transaction do
-      yield
-    end
+  def run_with_transaction(&block)
+    Sequel::Model.db.transaction(&block)
   end
 
   def record_not_found e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    render_record_not_found e
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    render_record_not_found(e)
   end
 
   def no_matching_row e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
     target = e.dataset.model.table_name.to_s.underscore rescue nil
-    render json: {
+    render(json: {
       error: {
         code: "not_found",
         target: target,
         message: e.message
       }.compact
-    }, status: :not_found
+    }, status: :not_found)
   end
 
   def foreign_key_constraint_violation e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
 
     # check if this is a violation of role_memberships_member_id_fkey
     # or role_memberships_role_id_fkey
@@ -122,8 +122,8 @@ class ApplicationController < ActionController::API
       key_index = key_string.index(/\(/, 1) + 1
       key = key_string[key_index, key_string.length - key_index - 1]
 
-      exc = Exceptions::RecordNotFound.new key, message: "Role #{key} does not exist"
-      render_record_not_found exc
+      exc = Exceptions::RecordNotFound.new(key, message: "Role #{key} does not exist")
+      render_record_not_found(exc)
     else
       # if this isn't a case we're handling yet, let the exception proceed
       raise e
@@ -131,7 +131,7 @@ class ApplicationController < ActionController::API
   end
 
   def validation_failed e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
     message = e.errors.map do |field, messages|
       messages.map do |message|
         [field, message].join(' ')
@@ -148,22 +148,19 @@ class ApplicationController < ActionController::API
       end
     end.flatten
 
-    render json: {
+    render(json: {
       error: {
         code: error_code_of_exception_class(e.class),
         message: message,
         details: details
       }
-    }, status: :unprocessable_entity
+    }, status: :unprocessable_entity)
   end
 
   def policy_invalid e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
 
-    error = {
-      code: "policy_invalid",
-      message: e.message
-    }
+    error = { code: "policy_invalid", message: e.message }
 
     if e.instance_of?(Conjur::PolicyParser::Invalid)
       error[:innererror] = {
@@ -174,25 +171,23 @@ class ApplicationController < ActionController::API
       }
     end
 
-    render json: {
-      error: error
-    }, status: :unprocessable_entity
+    render(json: { error: error }, status: :unprocessable_entity)
   end
 
   def argument_error e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
 
-    render json: {
+    render(json: {
       error: {
         code: error_code_of_exception_class(e.class),
         message: e.message
       }
-    }, status: :unprocessable_entity
+    }, status: :unprocessable_entity)
   end
 
   def record_exists e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    render json: {
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    render(json: {
       error: {
         code: "conflict",
         message: e.message,
@@ -203,71 +198,81 @@ class ApplicationController < ActionController::API
           message: e.id
         }
       }
-    }, status: :conflict
+    }, status: :conflict)
   end
 
   def forbidden e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    head :forbidden
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    head(:forbidden)
   end
 
   def bad_request e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    head :bad_request
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    head(:bad_request)
   end
 
   def unprocessable_entity e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    render json: {
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    render(json: {
       error: {
         code: :unprocessable_entity,
         message: e.message
       }
-    }, status: :unprocessable_entity
+    }, status: :unprocessable_entity)
+  end
+
+  def bad_secret_encoding e
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    render(json: {
+      error: {
+        code: :not_acceptable,
+        message: e.message
+      }
+    }, status: :not_acceptable)
   end
 
   def unauthorized e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
     if e.return_message_in_response
-      render json: {
+      render(json: {
         error: {
           code: :unauthorized,
           message: e.message
         }
-      }, status: :unauthorized
+      }, status: :unauthorized)
     else
-      head :unauthorized
+      head(:unauthorized)
     end
   end
 
   def internal_server_error e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    head :internal_server_error
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    head(:internal_server_error)
   end
 
   def service_unavailable e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    head :service_unavailable
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    head(:service_unavailable)
   end
 
   def gateway_timeout e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    head :gateway_timeout
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    head(:gateway_timeout)
   end
 
   def bad_gateway e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    head :bad_gateway
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    head(:bad_gateway)
   end
 
   def not_implemented e
-    logger.debug "#{e}\n#{e.backtrace.join "\n"}"
-    render json: {
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    render(json: {
       error: {
         code: "not_implemented",
         message: e.message
       }
-    }, status: :not_implemented
+    }, status: :not_implemented)
   end
 
   # Gets the value of the :account parameter.
@@ -275,8 +280,18 @@ class ApplicationController < ActionController::API
     @account ||= params[:account]
   end
 
+  def render_secret_not_found e
+    logger.debug("#{e}\n#{e.backtrace.join("\n")}")
+    render(json: {
+      error: {
+        code: "not_found",
+        message: e.message
+      }
+    }, status: :not_found)
+  end
+
   def render_record_not_found e
-    render json: {
+    render(json: {
       error: {
         code: "not_found",
         message: e.message,
@@ -287,7 +302,7 @@ class ApplicationController < ActionController::API
           message: e.id
         }
       }
-    }, status: :not_found
+    }, status: :not_found)
   end
 
   def error_code_of_exception_class cls

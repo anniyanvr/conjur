@@ -10,16 +10,18 @@ module Rotation
     # into Secret, it should probably be refactored out into its own model
     # class.  When that's done, it will require only a one word change here.
     #
-    def initialize(avail_rotators:,
-                   rotation_model: ::Secret,
-                   secret_model: ::Secret,
-                   facade_cls: ::Rotation::ConjurFacade)
+    def initialize(
+      avail_rotators:,
+      rotation_model: ::Secret,
+      secret_model: ::Secret,
+      facade_cls: ::Rotation::ConjurFacade
+    )
       @avail_rotators = avail_rotators
       @rotation_model = rotation_model
       @secret_model = secret_model
       @facade_cls = facade_cls
 
-      Sequel::Model.db.extension :pg_advisory_locking
+      Sequel::Model.db.extension(:pg_advisory_locking)
     end
 
     def rotate_every(seconds)
@@ -50,7 +52,7 @@ module Rotation
         ScheduledRotation.new(
           facade: facade,
           avail_rotators: @avail_rotators,
-          secret_model:  @secret_model
+          secret_model: @secret_model
         )
       end
     end

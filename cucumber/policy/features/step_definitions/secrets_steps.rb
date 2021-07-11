@@ -1,16 +1,27 @@
 # frozen_string_literal: true
 
-Then(/^I can( not)? add a secret to ([\w_]+) resource "([^"]*)"$/) do |fail, kind, id|
-  @value = SecureRandom.uuid
-  status = fail ? 403 : 200
-  invoke status: status do
-    conjur_api.resource(make_full_id(kind, id)).add_value @value
-  end
+# TODO: kind is now superfluous.  It is never used, since it's always "variable"
+Then(/^I can( not)? add a secret to ([\w_]+) resource "([^"]*)"$/) do |fail, _kind, id|
+  @random_secret = SecureRandom.uuid
+  expected_status = fail ? 403 : 201
+  resp = @client.add_secret(id: id, value: @random_secret)
+  expect(resp.code).to eq(expected_status)
 end
 
-Then(/^I can( not)? fetch a secret from ([\w_]+) resource "([^"]*)"$/) do |fail, kind, id|
-  status = fail ? 403 : 200
-  invoke status: status do
-    conjur_api.resource(make_full_id(kind, id)).value
-  end
+# TODO: kind is now superfluous.  It is never used, since it's always "variable"
+Then(/^I can( not)? fetch a secret from ([\w_]+) resource "([^"]*)"$/) do |fail, _kind, id|
+  expected_status = fail ? 403 : 200
+  resp = @client.fetch_secret(id: id)
+  expect(resp.code).to eq(expected_status)
+end
+
+Then("I can retrieve the same secret value from {string}") do |id|
+  resp = @client.fetch_secret(id: id)
+  expect(resp.code).to eq(200)
+  expect(resp.body).to eq(@random_secret)
+end
+
+Then(/^variable resource "([^"]*)" does not have a secret value$/) do |id|
+  resp = @client.fetch_secret(id: id)
+  expect(resp.code).to eq(404)
 end

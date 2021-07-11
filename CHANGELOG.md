@@ -6,6 +6,144 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.12.0] - 2021-06-25
+
+### Added
+- The JWT Authenticator (`authn-jwt`) supports authenticating third-party vendors that utilize JWT.
+  See [design](https://github.com/cyberark/conjur/blob/master/design/authenticators/authn_jwt/authn_jwt_solution_design.md)
+- Set MAX_REQUESTS_PER_CONNECTION to infinity and introduced an
+  environment variable to allow users to set their own value,
+  see PR for further information:
+  [cyberark/conjur#2282](https://github.com/cyberark/conjur/issues/2282)
+
+### Changed
+- Parsing a Conjur config with invalid YAML content now outputs a more user
+  friendly error message without a stack trace.
+  [cyberark/conjur#2256](https://github.com/cyberark/conjur/issues/2256)
+- Set the Puma process explicitly to reliably restart the correct process
+  when the Conjur configuration is reloaded.
+  [cyberark/conjur#2291](https://github.com/cyberark/conjur/pull/2291)
+
+### Security
+- Upgrade bindata to 2.4.10 to resolve Unspecified Issue reported by JFrog Xray
+  [cyberark/conjur#2257](https://github.com/cyberark/conjur/issues/2257)
+
+## [1.11.7] - 2021-06-08
+
+### Added
+- Enabled authenticators can now be configured via a configuration file, or the
+  CONJUR_AUTHENTICATORS environment variable.
+  [cyberark/conjur#2173](https://github.com/cyberark/conjur/issues/2173)
+- Trusted Proxies can now be configured with a configuration file or by setting
+  the CONJUR_TRUSTED_PROXIES environment variable.
+  [cyberark/conjur#2168](https://github.com/cyberark/conjur/issues/2168)
+- Added `conjurctl configuration show` command to print the Conjur configuration
+  values and the sources they are loaded from.
+  [cyberark/conjur#2169](https://github.com/cyberark/conjur/issues/2169)
+- Added `conjurctl configuration apply` command restart the Conjur process and
+  pick up changes to the configuration file.
+  [cyberark/conjur#2171](https://github.com/cyberark/conjur/issues/2171)
+
+### Fixed
+- Fix bug where running `conjurctl server` or `conjurctl account create` with
+  passwords that contain `,`s sent via stdin raised an error.
+  [cyberark/conjur#2159](https://github.com/cyberark/conjur/issues/2159)
+- Update the default keepalive timeout for puma to be longer than most common proxy and load balancers.
+  Previously, the load balancer in front of Conjur would commonly have a longer timeout than the
+  server itself, which can lead to Conjur closing connections even as there are pending requests and
+  the proxy returning 502 errors to the client.
+  [PR cyberark/conjur#2191](https://github.com/cyberark/conjur/pull/2191)
+
+### Security
+- Upgrade Rails to 5.2.5 to resolve CVE-2021-22885
+  [cyberark/conjur#2149](https://github.com/cyberark/conjur/issues/2149)
+- Upgrade Nokogiri to 1.11.5 to resolve
+  [GHSA-7rrm-v45f-jp64](https://github.com/advisories/GHSA-7rrm-v45f-jp64).
+- Upgrade Puma to 4.3.8 to resolve
+  [CVE-2021-29509](https://nvd.nist.gov/vuln/detail/CVE-2021-29509).
+- Upgrade Bundler to 2.2.18 to resolve
+  [CVE-2020-36327](https://nvd.nist.gov/vuln/detail/CVE-2020-36327).
+
+## [1.11.6] - 2021-04-28
+
+### Fixed
+- Fix bug where running `conjurctl server` or `conjurctl account create` with
+  non-alpha-numeric passwords sent via stdin raised an error.
+  [cyberark/conjur#2114](https://github.com/cyberark/conjur/issues/2114)
+
+### Changed
+- The batch secret retrieval endpoint now returns a 406 Not Acceptable instead
+  of a 500 error when a secret with incompatible encoding is requested.
+  [cyberark/conjur#2124](https://github.com/cyberark/conjur/pull/2124)
+
+### Security
+- Upgrade github-pages in docs/Gemfile to resolve CVE-2021-28834 in kramdown dependency [cyberark/conjur#2099](https://github.com/cyberark/conjur/issues/2099)
+- Bump `cyberark/ubi-ruby-fips` from 1.0.1 to 1.0.2 to address CVE-2021-20305.
+  [cyberark/conjur#2120](https://github.com/cyberark/conjur/issues/2120)
+
+### Added
+- File `API_VERSION` containing the current Conjur API Version, which corresponds to a
+  release of the [Conjur OpenAPI Spec](https://github.com/cyberark/conjur-openapi-spec).
+  [cyberark/conjur#2086](https://github.com/cyberark/conjur/pull/2086)
+- Status page details section now displays the Conjur API version.
+  [cyberark/conjur#2130](https://github.com/cyberark/conjur/issues/2130)
+
+## [1.11.5] - 2021-04-05
+
+### Fixed
+- Secrets batch request with blank variable names, now returns `Error 422
+  Unprocessable Entity`.
+  [cyberark/conjur#2083](https://github.com/cyberark/conjur/issues/2083)
+
+### Added
+- `conjurctl server` and `conjurctl account create` allow the operator to specify
+  the admin user's password via STDIN by providing the `--password-from-stdin` switch.
+  [cyberark/conjur#2043](https://github.com/cyberark/conjur/issues/2043)
+- `conjurctl account create` now allows the operator to specify the account name via
+  the `--name` flag. We recommend using this explicit flag when using the `--password-from-stdin`
+  option so that commands are explicit and more readable.
+  [cyberark/conjur#2043](https://github.com/cyberark/conjur/issues/2043)
+- `/whoami` API endpoint now produces audit events.
+  [cyberark/conjur#2052](https://github.com/cyberark/conjur/issues/2052)
+- When a user checks permissions of a non-existing role or a non-existing resource,
+  Conjur now audits a failure message.
+  [cyberark/conjur#2059](https://github.com/cyberark/conjur/issues/2059)
+
+### Changed
+- The secrets batch retrieval endpoint now refers to the `Accept-Encoding`
+  header rather than `Accept` to determine the response encoding.
+  [cyberark/conjur#2065](https://github.com/cyberark/conjur/pull/2065)
+- When trying to fetch a missing or empty secret, a proper error message is now
+  returned.
+  [cyberark/conjur#2023](https://github.com/cyberark/conjur/issues/2023)
+- Login and authentication error stack traces are printed to the log at the
+  default INFO level. Previously, users had to restart their servers with
+  `CONJUR_LOG_LEVEL=debug` to get meaningful log messages that diagnosed
+  configuration or enablement errors; with this change, server logs will be
+  clearer about login or authentication errors and will include minimal stack
+  traces.
+  [cyberark/conjur#2080](https://github.com/cyberark/conjur/issues/2080)
+- Conjur base image updated to v1.0.1.
+  [PR cyberark/conjur#2088](https://github.com/cyberark/conjur/pull/2088)
+
+## [1.11.4] - 2021-03-09
+
+### Security
+- Updated Rails to 5.2.4.5 to address CVE-2021-22880.
+  [cyberark/conjur#2056](https://github.com/cyberark/conjur/issues/2056)
+
+## [1.11.3] - 2021-02-22
+
+### Fixed
+- Conjur now raises a new `ServiceIdMissing` error if the `service-id` param is
+  missing in an authentication request for the OIDC authenticator.
+  [cyberark/conjur#2004](https://github.com/cyberark/conjur/issues/2004)
+
+### Changed
+- Conjur now raises a `RoleNotFound` error when trying to authenticate a
+  non-existent host in authn-k8s.
+  [cyberark/conjur#2046](https://github.com/cyberark/conjur/issues/2046)
+
 ## [1.11.2] - 2021-02-02
 ### Added
 - New `edge`-tagged images are published to DockerHub on every master branch
@@ -29,9 +167,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   [cyberark/conjur#1997](https://github.com/cyberark/conjur/issues/1997)
 
 ### Fixed
-- Conjur now raises a proper error if the `service-id` param is missing in an 
-  authentication request for the OIDC authenticator.
-  [cyberark/conjur#2004](https://github.com/cyberark/conjur/issues/2004)
 - Requests with empty body and `application/json` Content-Type Header will now
   return 400 error instead of 500 error.
   [cyberark/conjur#1968](https://github.com/cyberark/conjur/issues/1968)
@@ -94,7 +229,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - [Documentation](https://github.com/cyberark/conjur/blob/master/UPGRADING.md)
   explaining how to upgrade a Conjur server deployed in a Docker Compose environment.
   [cyberark/conjur#1528](https://github.com/cyberark/conjur/issues/1528), [cyberark/conjur#1584](https://github.com/cyberark/conjur/issues/1584)
-- When Conjur starts, we now convert blank environment variables to nil. This ensures we treat empty environment values as 
+- When Conjur starts, we now convert blank environment variables to nil. This ensures we treat empty environment values as
   if the environment variable is not present, rather than attempting to use the empty string value. [cyberark/conjur#1841](https://github.com/cyberark/conjur/issues/1841)
 
 ### Changed
@@ -103,7 +238,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   [cyberark/conjur#1848](https://github.com/cyberark/conjur/issues/1848)
 
 ### Fixed
-- Conjur now verifies that Kubernetes Authenticator variables exist and have value before retrieving them so that a 
+- Conjur now verifies that Kubernetes Authenticator variables exist and have value before retrieving them so that a
   proper error will be raised if they aren't.
   [cyberark/conjur#1315](https://github.com/cyberark/conjur/issues/1315)
 
@@ -533,7 +668,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - The first tagged version.
 
-[Unreleased]: https://github.com/cyberark/conjur/compare/v1.11.2...HEAD
+[Unreleased]: https://github.com/cyberark/conjur/compare/v1.12.0...HEAD
+[1.12.0]: https://github.com/cyberark/conjur/compare/v1.11.7...v1.12.0
+[1.11.7]: https://github.com/cyberark/conjur/compare/v1.11.6...v1.11.7
+[1.11.6]: https://github.com/cyberark/conjur/compare/v1.11.5...v1.11.6
+[1.11.5]: https://github.com/cyberark/conjur/compare/v1.11.4...v1.11.5
+[1.11.4]: https://github.com/cyberark/conjur/compare/v1.11.3...v1.11.4
+[1.11.3]: https://github.com/cyberark/conjur/compare/v1.11.2...v1.11.3
 [1.11.2]: https://github.com/cyberark/conjur/compare/v1.11.1...v1.11.2
 [1.11.1]: https://github.com/cyberark/conjur/compare/v1.11.0...v1.11.1
 [1.11.0]: https://github.com/cyberark/conjur/compare/v1.10.0...v1.11.0

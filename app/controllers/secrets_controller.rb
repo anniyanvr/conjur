@@ -5,23 +5,23 @@ require 'English'
 class SecretsController < RestController
   include FindResource
   include AuthorizeResource
-  
+
   before_action :current_user
-  
+
   def create
-    authorize :update
-    
+    authorize(:update)
+
     value = request.raw_post
 
     raise ArgumentError, "'value' may not be empty" if value.blank?
 
-    Secret.create resource_id: resource.id, value: value
+    Secret.create(resource_id: resource.id, value: value)
     resource.enforce_secrets_version_limit
 
-    head :created
+    head(:created)
   ensure
     update_info = error_info.merge(
-      resource: resource, 
+      resource: resource,
       user: @current_user,
       client_ip: request.ip,
       operation: "update"
@@ -31,23 +31,26 @@ class SecretsController < RestController
       Audit::Event::Update.new(update_info)
     )
   end
-  
+
   def show
-    authorize :execute
+    authorize(:execute)
     version = params[:version]
 
-    unless (secret = resource.secret version: version)
-      raise Exceptions::RecordNotFound.new \
+    unless (secret = resource.secret(version: version))
+      raise Exceptions::RecordNotFound.new(\
         resource.id, message: "Requested version does not exist"
+      )
     end
     value = secret.value
 
     mime_type = \
       resource.annotation('conjur/mime_type') || 'application/octet-stream'
 
-    send_data value, type: mime_type
+    send_data(value, type: mime_type)
+  rescue Exceptions::RecordNotFound
+    raise Errors::Conjur::MissingSecretValue, resource_id
   ensure
-    audit_fetch resource!, version: version
+    audit_fetch(resource_id, version: version)
   end
 
   def batch
@@ -60,17 +63,19 @@ class SecretsController < RestController
 
     result = {}
 
-    authorize_many variables, :execute
+    authorize_many(variables, :execute)
 
     variables.each do |variable|
-      result[variable.resource_id] = get_secret_from_variable variable
+      result[variable.resource_id] = get_secret_from_variable(variable)
 
-      audit_fetch variable
+      audit_fetch(variable.resource_id)
     end
 
-    render json: result
+    render(json: result)
   rescue Encoding::UndefinedConversionError
     raise Errors::Conjur::BadSecretEncoding, result
+  rescue Exceptions::RecordNotFound => e
+    raise Errors::Conjur::MissingSecretValue, e.id
   end
 
   def get_secret_from_variable(variable)
@@ -78,16 +83,18 @@ class SecretsController < RestController
     raise Exceptions::RecordNotFound, variable.resource_id unless secret
 
     secret_value = secret.value
-    accepts_base64 = String(request.headers['Accept']).casecmp?('base64')
-    accepts_base64 ? Base64.encode64(secret_value) : secret_value
+    accepts_base64 = String(request.headers['Accept-Encoding']).casecmp?('base64')
+    if accepts_base64
+      response.set_header("Content-Encoding", "base64")
+      Base64.encode64(secret_value)
+    else
+      secret_value
+    end
   end
 
-  def audit_fetch resource, version: nil
-    # don't audit the fetch if the resource doesn't exist
-    return unless resource
-
+  def audit_fetch(resource_id, version: nil)
     fetch_info = error_info.merge(
-      resource: resource,
+      resource_id: resource_id,
       version: version,
       user: current_user,
       client_ip: request.ip,
@@ -102,12 +109,12 @@ class SecretsController < RestController
   def error_info
     return { success: true } unless $ERROR_INFO
 
-    # If resource is not visible, the error info will say it cannot be found.
+    # If resource exists and is not visible, the error info will say it cannot be found.
     # That is still what we want to report to the client, but in the log we
-    # want more accurate 'Forbidden'.
+    # want the more accurate message 'Forbidden'.
     {
       success: false,
-      error_message: (resource_visible? ? $ERROR_INFO.message : 'Forbidden')
+      error_message: (resource_exists? && !resource_visible? ? 'Forbidden' : $ERROR_INFO.message)
     }
   end
 
@@ -129,9 +136,9 @@ class SecretsController < RestController
   #       correctness in this case.
   #
   def expire
-    authorize :update
+    authorize(:update)
     Secret.update_expiration(resource.id, nil)
-    head :created
+    head(:created)
   end
 
   private
@@ -140,7 +147,10 @@ class SecretsController < RestController
     return @variable_ids if @variable_ids
 
     @variable_ids = (params[:variable_ids] || '').split(',').compact
-    raise ArgumentError, 'variable_ids' if @variable_ids.empty?
+    # Checks that variable_ids is not empty and doesn't contain empty variable ids
+    raise ArgumentError, 'variable_ids' if @variable_ids.empty? ||
+      @variable_ids.count != @variable_ids.reject(&:empty?).count
+
     @variable_ids
   end
 end

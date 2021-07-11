@@ -19,7 +19,7 @@ require 'spec_helper'
 #    remote IP with RSpec and the Rails "request" test type. To do this with
 #    Cucumber would require greater control of the Docker network and containers
 #    for the Conjur cucumber tests than we have now.
-RSpec.describe "request IP address determination", type: :request do
+RSpec.describe("request IP address determination", type: :request) do
   def request_env(remote_addr)
     {
       # We can't modify the access token middleware to add an exception to our
@@ -30,13 +30,13 @@ RSpec.describe "request IP address determination", type: :request do
   end
 
   def request_ip(remote_addr:, x_forwarded_for: nil, trusted_proxies: nil)
-    ENV['TRUSTED_PROXIES'] = trusted_proxies
+    Rails.application.config.conjur_config.trusted_proxies = trusted_proxies
 
     headers = {}
     headers['X-Forwarded-For'] = x_forwarded_for if x_forwarded_for
-  
-    get '/whoami', env: request_env(remote_addr), headers: headers
-  
+
+    get('/whoami', env: request_env(remote_addr), headers: headers)
+
     JSON.parse(response.body)['client_ip']
   end
 

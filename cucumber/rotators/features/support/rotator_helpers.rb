@@ -2,24 +2,24 @@
 
 # TODO: Explanation of design and how to add a new rotator
 #
-
 require 'aws-sdk-iam'
-
+require 'cucumber/policy/features/support/client'
 # Utility methods for rotation tests
 #
 module RotatorHelpers
-
+  include PolicyHelpers
+  
   # Utility for the postgres rotator
-  #
+
   def run_sql_in_testdb(sql, user='postgres', pw='postgres_secret')
     system("PGPASSWORD=#{pw} psql -h testdb -U #{user} -c \"#{sql}\"")
   end
 
-  def variable(var_name)
-    conjur_api.resource("cucumber:variable:#{var_name}")
+  def variable(id)
+    @client.fetch_secret(id: id)
   end
 
-  # This wires up and kicks off of the postgres polling process, and then
+  # # This wires up and kicks off of the postgres polling process, and then
   # returns the results of that process: a history of distinct passwords seen
   # by the polling.
   #
@@ -52,7 +52,7 @@ module RotatorHelpers
   # This represents a rotating postgres password across time -- a changing
   # entity with a current_value.
   # 
-  # The "value" of this entity only exists when the actual db password matches
+  # The "value" of this entity only exiss when the actual db password matches
   # the password in Conjur.  During the ephemeral moments when they're out of
   # sync, or when either one of the passwords is not available, the
   # `PgRotatingPassword` is considered to be `nil`.
@@ -63,7 +63,7 @@ module RotatorHelpers
   #
   PgRotatingPassword ||= Struct.new(:var_name, :db_user, :variable_meth) do
     def current_value
-      pw = variable_meth.(var_name)&.value
+      pw = variable_meth.(var_name)
       pw_works_in_db = pg_login_result(db_user, pw) if pw
       pw_works_in_db ? pw : nil
     rescue
@@ -88,6 +88,7 @@ module RotatorHelpers
       key = variable_meth.("#{policy_id}/secret_access_key")&.value
       return nil unless id && key
       return nil unless valid_credentials?(id, key)
+
       { access_key_id: id, secret_access_key: key}
     rescue
       nil
@@ -138,13 +139,14 @@ module RotatorHelpers
         history = updated_history(history)
         return history if stop?(history)
         raise error_msg if timer.has_exceeded?(@timeout)
+
         sleep(0.3)
       end
     end
 
     def stop?(history)
       has_enough_values = history.size >= @values_needed
-      should_stop_early = @stop_early&.call(history) 
+      should_stop_early = @stop_early&.call(history)
       has_enough_values || should_stop_early
     end
 

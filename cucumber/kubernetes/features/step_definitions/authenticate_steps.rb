@@ -5,6 +5,16 @@ end
 def gen_cert(host_id)
   username = [namespace, host_id].join('/')
   webservice_resource_id = "#{ENV['CONJUR_ACCOUNT']}:webservice:#{username}"
+  role_id = "#{ENV['CONJUR_ACCOUNT']}:policy:#{username}"
+  Role.create(role_id: role_id)
+  Resource.create(
+    resource_id: "#{ENV['CONJUR_ACCOUNT']}:variable:#{username}/ca/cert",
+    owner_id: role_id
+  )
+  Resource.create(
+    resource_id: "#{ENV['CONJUR_ACCOUNT']}:variable:#{username}/ca/key",
+    owner_id: role_id
+  )
   ::Repos::ConjurCA.create(webservice_resource_id)
 end
 
@@ -17,7 +27,7 @@ def authenticate_k8s(host, cert, key, conjur_id)
     ssl_client_cert: cert,
     ssl_client_key: key,
     verify_ssl: OpenSSL::SSL::VERIFY_PEER
-  )["#{ENV['CONJUR_ACCOUNT']}/#{CGI.escape conjur_id}/authenticate?request_ip=#{@request_ip}"].post('')
+  )["#{ENV['CONJUR_ACCOUNT']}/#{CGI.escape(conjur_id)}/authenticate?request_ip=#{@request_ip}"].post('')
 end
 
 Given(/^I use the IP address of(?: a pod in)? "([^"]*)"$/) do |objectid|
@@ -41,6 +51,7 @@ Then(/^I( can)? authenticate with authn-k8s as "([^"]*)"( without cert and key)?
     response = authenticate_k8s(authn_k8s_host, cert, key, conjur_id)
   rescue
     raise if success
+
     @error = $!
   end
 
@@ -65,6 +76,7 @@ Then(/^I( can)? authenticate pod matching "([^"]*)" with authn-k8s as "([^"]*)"(
     response = authenticate_k8s(authn_k8s_host, cert, key, conjur_id)
   rescue
     raise if success
+
     @error = $!
   end
 

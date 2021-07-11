@@ -12,13 +12,13 @@ git_source(:github) { |name| "https://github.com/#{name}.git" }
 ruby '2.5.8'
 #ruby-gemset=conjur
 
-gem 'command_class'
 gem 'base58'
+gem 'command_class'
 gem 'http', '~> 4.2.0'
 gem 'iso8601'
 gem 'jbuilder', '~> 2.7.0'
 gem 'nokogiri', '>= 1.8.2'
-gem 'puma', '~> 3.12.5'
+gem 'puma', '~> 5.3.2'
 gem 'rack', '~> 2.2.3'
 gem 'rails', '~> 5.2'
 gem 'rake'
@@ -79,28 +79,33 @@ group :production do
 end
 
 # authn-k8s
+gem 'event_emitter'
 gem 'kubeclient'
 gem 'websocket'
-gem 'event_emitter'
 
 # authn-oidc
 gem 'jwt'
 gem 'openid_connect'
 
+# Unpin version once this Github issue,
+# https://github.com/palkan/anyway_config/issues/82
+# is resolved
+gem "anyway_config", "2.1.0"
+
 group :development, :test do
   gem 'aruba'
-  gem 'csr'
   gem 'ci_reporter_rspec'
   gem 'conjur-cli', '~> 6.1'
   gem 'conjur-debify', require: false
+  gem 'csr'
   gem 'cucumber'
   gem 'database_cleaner'
+  gem 'debase'
   gem 'json_spec'
   gem 'net-ssh'
   gem 'parallel'
   gem 'pry-byebug'
   gem 'pry-rails'
-  gem 'debase'
   gem 'rails-controller-testing'
   gem 'rails_layout'
   gem 'rake_shared_context'
@@ -115,7 +120,7 @@ group :development, :test do
 end
 
 group :development do
-  # note: minor version of this needs to match codeclimate channel
+  # NOTE: minor version of this needs to match codeclimate channel
   gem 'rubocop', '~> 0.58.0', require: false
 
   gem 'reek', require: false

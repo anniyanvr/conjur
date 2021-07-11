@@ -11,45 +11,18 @@ class PoliciesController < RestController
 
   # Conjur policies are YAML documents, so we assume that if no content-type
   # is provided in the request.
-  set_default_content_type_for_path(%r{^\/policies}, 'application/x-yaml')
+  set_default_content_type_for_path(%r{^/policies}, 'application/x-yaml')
 
   def put
-    authorize :update
-
-    policy = save_submitted_policy(delete_permitted: true)
-    replace_policy = Loader::ReplacePolicy.from_policy(policy)
-    created_roles = perform(replace_policy)
-
-    render json: {
-      created_roles: created_roles,
-      version: policy.version
-    }, status: :created
+    load_policy(:update, Loader::ReplacePolicy, true)
   end
 
   def patch
-    authorize :update
-
-    policy = save_submitted_policy(delete_permitted: true)
-    modify_policy = Loader::ModifyPolicy.from_policy(policy)
-    created_roles = perform(modify_policy)
-
-    render json: {
-      created_roles: created_roles,
-      version: policy.version
-    }, status: :created
+    load_policy(:update, Loader::ModifyPolicy, true)
   end
 
   def post
-    authorize :create
-
-    policy = save_submitted_policy(delete_permitted: false)
-    create_policy = Loader::CreatePolicy.from_policy(policy)
-    created_roles = perform(create_policy)
-
-    render json: {
-      created_roles: created_roles,
-      version: policy.version
-    }, status: :created
+    load_policy(:create, Loader::CreatePolicy, false)
   end
 
   protected
@@ -67,20 +40,55 @@ class PoliciesController < RestController
 
   private
 
+  def load_policy(action, loader_class, delete_permitted)
+    authorize(action)
+
+    policy = save_submitted_policy(delete_permitted: delete_permitted)
+    loaded_policy = loader_class.from_policy(policy)
+    created_roles = perform(loaded_policy)
+    audit_success(policy)
+
+    render(json: {
+      created_roles: created_roles,
+      version: policy.version
+    }, status: :created)
+  rescue => e
+    audit_failure(e, action)
+    raise e
+  end
+
+  def audit_success(policy)
+    policy.policy_log.lazy.map(&:to_audit_event).each do |event|
+      Audit.logger.log(event)
+    end
+  end
+
+  def audit_failure(err, operation)
+    Audit.logger.log(
+      Audit::Event::Policy.new(
+        operation: operation,
+        subject: {}, # Subject is empty because no role/resource has been impacted
+        user: current_user,
+        client_ip: request.ip,
+        error_message: err.message
+      )
+    )
+  end
+
   def concurrent_load(_exception)
     response.headers['Retry-After'] = retry_delay
-    render json: {
+    render(json: {
       error: {
         code: "policy_conflict",
         message: "Concurrent policy load in progress, please retry"
       }
-    }, status: :conflict
+    }, status: :conflict)
   end
 
   # Delay in seconds to advise the client to wait before retrying on conflict.
   # It's randomized to avoid request bunching.
   def retry_delay
-    rand 1..8
+    rand(1..8)
   end
 
   def save_submitted_policy(delete_permitted:)

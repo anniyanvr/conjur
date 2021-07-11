@@ -6,8 +6,8 @@ require 'English'
 
 require 'simplecov'
 
-SimpleCov.command_name "SimpleCov #{rand(1000000)}"
-SimpleCov.merge_timeout 7200
+SimpleCov.command_name("SimpleCov #{rand(1000000)}")
+SimpleCov.merge_timeout(7200)
 SimpleCov.start
 
 # This file is copied to spec/ when you run 'rails generate rspec:install'
@@ -25,6 +25,10 @@ ENV.delete('CONJUR_ADMIN_PASSWORD')
 
 $LOAD_PATH << '../app/domain'
 
+# Add conjur-cli load path to the specs, since these source files are
+# not under the default load paths.
+$LOAD_PATH << './bin/conjur-cli'
+
 RSpec.configure do |config|
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
@@ -37,9 +41,9 @@ RSpec.configure do |config|
   end
 
   config.order = "random"
-  config.filter_run_excluding performance: true
+  config.filter_run_excluding(performance: true)
   config.infer_spec_type_from_file_location!
-  config.filter_run_when_matching :focus
+  config.filter_run_when_matching(:focus)
 end
 
 # We want full-length error messages since RSpec has a pretty small
@@ -65,8 +69,8 @@ def secret_logged?(secret)
   raise "unexpected grep error" if exit_status > 1
 
   # Remaining possibilities are 0 and 1, secret found or not found.
-  secret_found = exit_status == 0
-  secret_found
+  exit_status == 0
+  
 end
 
 # Creates valid access token for the given username.
@@ -75,7 +79,7 @@ def access_token_for(user, account: 'rspec')
   # Configure Slosilo to produce valid access tokens
   slosilo = Slosilo["authn:#{account}"] ||= Slosilo::Key.new
   bearer_token = slosilo.issue_jwt(sub: user)
-  "Token token=\"#{Base64.strict_encode64 bearer_token.to_json}\""
+  "Token token=\"#{Base64.strict_encode64(bearer_token.to_json)}\""
 end
 
 require 'stringio'

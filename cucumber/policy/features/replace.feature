@@ -45,7 +45,7 @@ A policy can be reloaded using the --replace flag
       members:
       - !user developer2
     """
-    Then there is an error
+    Then there's an error
     And the error code is "not_found"
     And the error message is "Role cucumber:group:developers does not exist"
 
@@ -81,9 +81,106 @@ A policy can be reloaded using the --replace flag
       - !user developer1
       - !user developer2
     """
-    Then there is an error
+    Then there's an error
     And the error code is "not_found"
     And the error message is "Role cucumber:group:security-admin does not exist"
+
+  Scenario: Removing variable declaration from policy deletes its value
+    Given I load a policy:
+    """
+    - !policy
+      id: test
+      body:
+      - !variable db-password
+    """
+    # Variable loaded twice so we verify we delete all of its versions
+    And I can add a secret to variable resource "test/db-password"
+    And I can add a secret to variable resource "test/db-password"
+    And I can fetch a secret from variable resource "test/db-password"
+    When I load a policy:
+    """
+    - !policy
+      id: test
+    """
+    And I load a policy:
+    """
+    - !policy
+      id: test
+      body:
+      - !variable db-password
+    """
+    Then variable "test/db-password" exists
+    And variable resource "test/db-password" does not have a secret value
+
+  Scenario: Removing policy with variable declaration deletes its value
+    Given I load a policy:
+    """
+    - !policy
+      id: test
+      body:
+      - !variable db-password
+    """
+    # Variable loaded twice so we verify we delete all of its versions
+    And I can add a secret to variable resource "test/db-password"
+    And I can add a secret to variable resource "test/db-password"
+    And I can fetch a secret from variable resource "test/db-password"
+    When I load a policy:
+    """
+    - !policy empty
+    """
+    And I load a policy:
+    """
+    - !policy
+      id: test
+      body:
+      - !variable db-password
+    """
+    Then variable "test/db-password" exists
+    And variable resource "test/db-password" does not have a secret value
+
+  Scenario: Replacing policy with variable declaration keeps variable's secret value
+    Given I load a policy:
+    """
+    - !policy
+      id: test
+      body:
+      - !variable db-password
+    """
+    # Variable loaded twice so we verify we delete all of its versions
+    And I can add a secret to variable resource "test/db-password"
+    And I can add a secret to variable resource "test/db-password"
+    And I can fetch a secret from variable resource "test/db-password"
+    When I load a policy:
+    """
+    - !policy
+      id: test
+      body:
+      - !variable db-password
+    """
+    Then variable "test/db-password" exists
+    And I can fetch a secret from variable resource "test/db-password"
+
+  Scenario: Replacing policy root with same policy tests replaces the variable
+    Given I load a policy:
+    """
+    - !policy
+      id: test
+      body:
+      - !variable db-password
+    """
+    # Variable loaded twice so we verify we delete all of its versions
+    And I can add a secret to variable resource "test/db-password"
+    And I can add a secret to variable resource "test/db-password"
+    And I can fetch a secret from variable resource "test/db-password"
+    When I replace the "root" policy with:
+    """
+    - !policy
+      id: test
+      body:
+      - !variable db-password
+    """
+    Then variable "test/db-password" exists
+    And I can fetch a secret from variable resource "test/db-password"
 
   Scenario: A multifile policy successfully reloads when files are concatenated
 
@@ -143,7 +240,7 @@ A policy can be reloaded using the --replace flag
       members:
       - !user developer2
     """
-    Then there is no error
+    Then there's no error
     Then user "developer1" does not exist
     And I show the group "developers"
     Then user "developer1" is not a role member

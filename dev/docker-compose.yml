@@ -1,7 +1,7 @@
 version: "3"
 services:
   pg:
-    image: postgres:10.14
+    image: postgres:10.16
     environment:
       # To avoid the following error:
       #
@@ -15,13 +15,13 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
 
   audit:
-    image: postgres:10.14
+    image: postgres:10.16
     environment:
       # See description on `pg` service for use of POSTGRES_HOST_AUTH_METHOD
       POSTGRES_HOST_AUTH_METHOD: trust
 
   testdb:
-    image: postgres:10.14
+    image: postgres:10.16
     environment:
       POSTGRES_PASSWORD: postgres_secret
 
@@ -55,11 +55,12 @@ services:
     - authn-local:/run/authn-local
     - ../ci/ldap-certs:/ldap-certs:ro
     # TODO: authenticators_oidc/test has a dep on this
-    - ../ci/test_suites/authenticators_oidc/keycloak:/authn-oidc/keycloak/scripts
+    - ../ci/oauth/keycloak:/oauth/keycloak/scripts
+    - jwks-volume:/var/jwks
     links:
     - pg:pg
     - ldap-server
-    - oidc-keycloak:keycloak
+    - keycloak
 
   cucumber:
     image: conjur-dev
@@ -77,6 +78,7 @@ services:
       - ..:/src/conjur-server
       - authn-local:/run/authn-local
       - ../ci/ldap-certs:/ldap-certs:ro
+      - jwks-volume:/var/jwks
     links:
       - conjur
       - pg
@@ -112,7 +114,7 @@ services:
       - ./files/authn-ldap/ldap:/container/service/slapd/assets/config/bootstrap/ldif/custom
       - ../ci/ldap-certs:/container/service/slapd/assets/certs:ro
 
-  oidc-keycloak:
+  keycloak:
     image: jboss/keycloak:4.3.0.Final
     environment:
       - KEYCLOAK_USER=admin
@@ -135,8 +137,8 @@ services:
       - "7777:8080"
     volumes:
       # TODO: authenticators_oidc/test has a dep on this
-      - ../ci/test_suites/authenticators_oidc/keycloak:/scripts
-      - ../ci/test_suites/authenticators_oidc/keycloak/standalone.xml:/opt/jboss/keycloak/standalone/configuration/standalone.xml
+      - ../ci/oauth/keycloak:/scripts
+      - ../ci/oauth/keycloak/standalone.xml:/opt/jboss/keycloak/standalone/configuration/standalone.xml
 
   okta-ldap-agent:
     image: weareenvoy/okta-ldap-agent
@@ -145,5 +147,17 @@ services:
     entrypoint: sleep
     command: infinity
 
+  jwks:
+    image: nginx
+    ports:
+      - 8880:80
+    volumes:
+      - jwks-volume:/usr/share/nginx/html
+      - ../ci/oauth/jwks/nginx.conf:/etc/nginx/conf.d/defualt.conf
+      - ../ci/oauth/jwks:/tmp
+    entrypoint: sleep
+    command: infinity
+
 volumes:
   authn-local:
+  jwks-volume:

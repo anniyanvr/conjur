@@ -1,27 +1,29 @@
 module Audit
   module Event
-    # Note: Breaking this class up further would harm clarity.
+    # NOTE: Breaking this class up further would harm clarity.
     # :reek:TooManyInstanceVariables and :reek:TooManyParameters
     class Check
       def initialize(
         user:,
         client_ip:,
-        resource:,
+        resource_id:,
         privilege:,
-        role:,
+        role_id:,
         operation:,
-        success:
+        success:,
+        error_message: nil
       )
         @user = user
         @client_ip = client_ip
-        @resource = resource
+        @resource_id = resource_id
         @privilege = privilege
-        @role = role
+        @role_id = role_id
         @operation = operation
         @success = success
+        @error_message = error_message
       end
 
-      # Note: We want this class to be responsible for providing `progname`.
+      # NOTE: We want this class to be responsible for providing `progname`.
       # At the same time, `progname` is currently always "conjur" and this is
       # unlikely to change.  Moving `progname` into the constructor now
       # feels like premature optimization, so we ignore reek here.
@@ -39,8 +41,8 @@ module Audit
       end
 
       def message
-        "#{@user.id} checked if #{role_text} can #{@privilege} " \
-          "#{@resource.id} (#{success_text})"
+        "#{@user.id} #{result_text} if #{role_text} can #{@privilege} " \
+          "#{@resource_id} #{error_message_text}"
       end
 
       def message_id
@@ -51,8 +53,8 @@ module Audit
         {
           SDID::AUTH => { user: @user.id },
           SDID::SUBJECT => {
-            resource: @resource.id,
-            role: @role.id,
+            resource: @resource_id,
+            role: @role_id,
             privilege: @privilege
           },
           SDID::CLIENT => { ip: @client_ip }
@@ -84,13 +86,16 @@ module Audit
       end
 
       def role_text
-        @user == @role ? 'they' : @role.id
+        @user.id == @role_id ? 'they' : @role_id
       end
 
-      def success_text
-        attempted_action.success_text
+      def result_text
+        @success ? "successfully checked" : "failed to check"
       end
 
+      def error_message_text
+        @error_message ? ": #{@error_message}" : ""
+      end
     end
   end
 end

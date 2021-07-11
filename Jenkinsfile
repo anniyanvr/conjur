@@ -191,6 +191,7 @@ pipeline {
                       authenticators_azure/cucumber_results.html,
                       authenticators_ldap/cucumber_results.html,
                       authenticators_oidc/cucumber_results.html,
+                      authenticators_jwt/cucumber_results.html,
                       authenticators_status/cucumber_results.html
                       policy/cucumber_results.html,
                       rotators/cucumber_results.html
@@ -429,7 +430,7 @@ pipeline {
           script {
             if (env.BRANCH_NAME == 'master') {
               build(
-                job:'../cyberark--secrets-provider-for-k8s/master',
+                job:'../cyberark--secrets-provider-for-k8s/main',
                 wait: false
               )
             }
@@ -457,6 +458,7 @@ pipeline {
                 authenticators_azure/cucumber_results.html,
                 authenticators_ldap/cucumber_results.html,
                 authenticators_oidc/cucumber_results.html,
+                authenticators_jwt/cucumber_results.html,
                 authenticators_gcp/cucumber_results.html,
                 authenticators_status/cucumber_results.html,
                 policy/cucumber_results.html,
@@ -525,7 +527,7 @@ pipeline {
             build(
               job:'../conjurinc--conjurops/master',
               parameters:[
-                string(name: 'conjur_oss_source_image', value: "registry2.itci.conjur.net/conjur:${TAG_NAME}")
+                string(name: 'conjur_oss_source_image', value: "cyberark/conjur:${TAG_NAME}")
               ],
               wait: false
             )
@@ -533,10 +535,18 @@ pipeline {
         }
 
         stage('On a master build') {
-          when { branch "master" }
-
+          when { environment name: 'JOB_NAME', value: 'cyberark--conjur/master' }
           steps {
-            sh './push-image.sh --edge'
+            script {
+              def tasks = [:]
+              tasks["Publish edge to local registry"] = {
+                sh './push-image.sh --edge --registry-prefix=registry.tld'
+              }
+              tasks["Publish edge to DockerHub"] = {
+                sh './push-image.sh --edge'
+              }
+              parallel tasks
+            }
           }
         }
       }
@@ -544,6 +554,7 @@ pipeline {
 
     stage('Build Debian and RPM packages') {
       steps {
+        sh 'echo "CONJUR_VERSION=5" >> debify.env'
         sh './package.sh'
         archiveArtifacts artifacts: '*.deb', fingerprint: true
         archiveArtifacts artifacts: '*.rpm', fingerprint: true
@@ -611,6 +622,9 @@ def runConjurTests() {
       },
       "OIDC Authenticator - ${env.STAGE_NAME}": {
         sh 'ci/test authenticators_oidc'
+      },
+      "JWT Authenticator - ${env.STAGE_NAME}": {
+        sh 'ci/test authenticators_jwt'
       },
       "Policy - ${env.STAGE_NAME}": {
         sh 'ci/test policy'

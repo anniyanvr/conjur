@@ -46,30 +46,30 @@ Then(/^we find at least (\d+) distinct matching passwords$/) do |num_needed_str|
 end
 
 Then(/^the generated passwords have length (\d+)$/) do |len_str|
-  length    = len_str.to_i
+  length = len_str.to_i
   conjur_pw = @pg_pw_history.last
   expect(conjur_pw.length).to eq(length)
 end
 
 Given(/^I have the root policy:$/) do |policy|
-  invoke do
-    load_root_policy policy
-  end
+  @client = Client.for("user", "admin")
+  @result = @client.load_policy(id: 'root', policy: policy)
 end
 
 Given(/^I reset my root policy$/) do
-  invoke do
-    load_root_policy <<~EOS
+  @client = Client.for("user", "admin")
+  @result = @client.load_policy(
+    id: 'root',
+    policy: <<~POLICY
       - !policy
          id: db-reports
          body:
-    EOS
-  end
+    POLICY
+  )
 end
 
-Given(/^I add the value "(.*)" to variable "(.+)"$/) do |val, var_name|
-  var = variable(var_name)
-  var.add_value(val)
+Given(/^I add the value "(.*)" to variable "(.+)"$/) do |val, id|
+  @client.add_secret(id: id, value: val)
 end
 
 # There are two cases we have to handle during manual testing:
@@ -101,16 +101,21 @@ Then(regex) do |policy_id|
   raise "'AWS_DEFAULT_REGION' is not defined in ENV" unless region
   raise "'AWS_ACCESS_KEY_ID' is not defined in ENV" unless id
   raise "'AWS_SECRET_ACCESS_KEY' is not defined in ENV" unless secret
-  region_var.add_value(region)
-  id_var.add_value(id)
-  secret_var.add_value(secret)
+
+  @client.add_secret("#{policy_id}/region", region)
+  @client.add_secret("#{policy_id}/access_key_id", id)
+  @client.add_secret("#{policy_id}/secret_access_key", secret)
 end
 
+# get-secret in metaproramming rotators stuff
+# few other references in this file
+
 Then(/^I add ENV\[(.+)\] to variable "(.+)"$/) do |env_var, conjur_varname|
-  var = variable(conjur_varname)
+  variable(conjur_varname)
   val = ENV[env_var]
   raise "'#{env_var}' is not defined in ENV" unless val
-  var.add_value(val)
+
+  @client.add_secret(conjur_varname, val)
 end
 
 

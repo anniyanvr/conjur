@@ -30,19 +30,19 @@ module BasicAuthenticator
     ::Authentication::Login.new.(
       authenticator_input: login_input(username, password),
       authenticators: installed_login_authenticators,
-      enabled_authenticators: Authentication::InstalledAuthenticators.enabled_authenticators_str(ENV)
+      enabled_authenticators: Authentication::InstalledAuthenticators.enabled_authenticators_str
     )
   end
 
   def login_input(username, password)
     ::Authentication::AuthenticatorInput.new(
       authenticator_name: params[:authenticator],
-      service_id:         params[:service_id],
-      account:            params[:account],
-      username:           username,
-      credentials:        password,
-      client_ip:          request.ip,
-      request:            request
+      service_id: params[:service_id],
+      account: params[:account],
+      username: username,
+      credentials: password,
+      client_ip: request.ip,
+      request: request
     )
   end
 

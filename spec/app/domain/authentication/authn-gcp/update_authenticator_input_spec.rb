@@ -2,8 +2,8 @@
 
 require 'spec_helper'
 
-RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
-
+RSpec.describe('Authentication::AuthnGcp::UpdateAuthenticatorInput') do
+  include_context "base64url"
   include_context "security mocks"
 
   let(:account) { "my-acct" }
@@ -17,7 +17,7 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
 
   before(:each) do
     allow(mocked_verify_and_decode_token).to receive(:call) { |*args|
-      JSON.parse(args[0][:token_jwt]).to_hash
+      JSON.parse(base64_url_decode(args[0][:token_jwt].split('.')[1])).to_hash
     }
   end
 
@@ -28,7 +28,7 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
   def mock_authenticate_gcp_token_request(request_body_data:)
     double('AuthnGcpRequest').tap do |request|
       request_body = StringIO.new
-      request_body.puts request_body_data
+      request_body.puts(request_body_data)
       request_body.rewind
 
       allow(request).to receive(:body).and_return(request_body)
@@ -40,7 +40,9 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
   end
 
   let(:authenticate_gcp_token_request) do
-    mock_authenticate_gcp_token_request(request_body_data: "jwt={\"jwt_claim\": \"jwt_claim_value\"}")
+    mock_authenticate_gcp_token_request(
+      request_body_data:
+        "jwt=aa.#{base64_url_encode("{\"jwt_claim\": \"jwt_claim_value\"}")}.cc")
   end
 
   let(:valid_audience) { "conjur/#{account}/#{hostname}" }
@@ -55,10 +57,10 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
   def mocked_decoded_token_class(audience)
     double('DecodedToken').tap do |decoded_token_class|
       allow(decoded_token_class).to receive(:new)
-                                      .and_return(decoded_token)
+        .and_return(decoded_token)
 
       allow(decoded_token).to receive(:audience)
-                                .and_return(audience)
+        .and_return(audience)
     end
   end
 
@@ -74,18 +76,18 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
           subject do
             authenticator_input = Authentication::AuthenticatorInput.new(
               authenticator_name: authenticator_name,
-              service_id:         nil,
-              account:            account,
-              username:           hostname,
-              credentials:        request_body(authenticate_gcp_token_request),
-              client_ip:          '127.0.0.1',
-              request:            authenticate_gcp_token_request
+              service_id: nil,
+              account: account,
+              username: hostname,
+              credentials: request_body(authenticate_gcp_token_request),
+              client_ip: '127.0.0.1',
+              request: authenticate_gcp_token_request
             )
 
             ::Authentication::AuthnGcp::UpdateAuthenticatorInput.new(
               verify_and_decode_token: mocked_verify_and_decode_token,
               validate_account_exists: mock_validate_account_exists(validation_succeeded: true),
-              decoded_token_class:     mocked_decoded_token_class(valid_audience)
+              decoded_token_class: mocked_decoded_token_class(valid_audience)
             ).call(
               authenticator_input: authenticator_input
             )
@@ -108,18 +110,18 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
           subject do
             authenticator_input = Authentication::AuthenticatorInput.new(
               authenticator_name: authenticator_name,
-              service_id:         nil,
-              account:            account,
-              username:           hostname,
-              credentials:        request_body(authenticate_gcp_token_request),
-              client_ip:          '127.0.0.1',
-              request:            authenticate_gcp_token_request
+              service_id: nil,
+              account: account,
+              username: hostname,
+              credentials: request_body(authenticate_gcp_token_request),
+              client_ip: '127.0.0.1',
+              request: authenticate_gcp_token_request
             )
 
             ::Authentication::AuthnGcp::UpdateAuthenticatorInput.new(
               verify_and_decode_token: mocked_verify_and_decode_token,
               validate_account_exists: mock_validate_account_exists(validation_succeeded: true),
-              decoded_token_class:     mocked_decoded_token_class(valid_audience_rooted_host)
+              decoded_token_class: mocked_decoded_token_class(valid_audience_rooted_host)
             ).call(
               authenticator_input: authenticator_input
             )
@@ -144,18 +146,18 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
           subject do
             authenticator_input = Authentication::AuthenticatorInput.new(
               authenticator_name: authenticator_name,
-              service_id:         nil,
-              account:            account,
-              username:           hostname,
-              credentials:        request_body(authenticate_gcp_token_request),
-              client_ip:          '127.0.0.1',
-              request:            authenticate_gcp_token_request
+              service_id: nil,
+              account: account,
+              username: hostname,
+              credentials: request_body(authenticate_gcp_token_request),
+              client_ip: '127.0.0.1',
+              request: authenticate_gcp_token_request
             )
 
             ::Authentication::AuthnGcp::UpdateAuthenticatorInput.new(
               verify_and_decode_token: mocked_verify_and_decode_token,
               validate_account_exists: mock_validate_account_exists(validation_succeeded: true),
-              decoded_token_class:     mocked_decoded_token_class(valid_audience)
+              decoded_token_class: mocked_decoded_token_class(valid_audience)
             ).call(
               authenticator_input: authenticator_input
             )
@@ -163,7 +165,7 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
 
           it 'raises the error raised by mocked_verify_and_decode_token' do
             allow(mocked_verify_and_decode_token).to receive(:call)
-                                                       .and_raise(verify_and_decode_token_error)
+              .and_raise(verify_and_decode_token_error)
 
             expect { subject }.to raise_error(
               verify_and_decode_token_error
@@ -176,18 +178,18 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
             subject do
               authenticator_input = Authentication::AuthenticatorInput.new(
                 authenticator_name: authenticator_name,
-                service_id:         nil,
-                account:            account,
-                username:           hostname,
-                credentials:        request_body(authenticate_gcp_token_request),
-                client_ip:          '127.0.0.1',
-                request:            authenticate_gcp_token_request
+                service_id: nil,
+                account: account,
+                username: hostname,
+                credentials: request_body(authenticate_gcp_token_request),
+                client_ip: '127.0.0.1',
+                request: authenticate_gcp_token_request
               )
 
               ::Authentication::AuthnGcp::UpdateAuthenticatorInput.new(
                 verify_and_decode_token: mocked_verify_and_decode_token,
                 validate_account_exists: mock_validate_account_exists(validation_succeeded: true),
-                decoded_token_class:     mocked_decoded_token_class(two_parts_audience)
+                decoded_token_class: mocked_decoded_token_class(two_parts_audience)
               ).call(
                 authenticator_input: authenticator_input
               )
@@ -204,18 +206,18 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
             subject do
               authenticator_input = Authentication::AuthenticatorInput.new(
                 authenticator_name: authenticator_name,
-                service_id:         nil,
-                account:            account,
-                username:           hostname,
-                credentials:        request_body(authenticate_gcp_token_request),
-                client_ip:          '127.0.0.1',
-                request:            authenticate_gcp_token_request
+                service_id: nil,
+                account: account,
+                username: hostname,
+                credentials: request_body(authenticate_gcp_token_request),
+                client_ip: '127.0.0.1',
+                request: authenticate_gcp_token_request
               )
 
               ::Authentication::AuthnGcp::UpdateAuthenticatorInput.new(
                 verify_and_decode_token: mocked_verify_and_decode_token,
                 validate_account_exists: mock_validate_account_exists(validation_succeeded: true),
-                decoded_token_class:     mocked_decoded_token_class(missing_conjur_prefix_audience)
+                decoded_token_class: mocked_decoded_token_class(missing_conjur_prefix_audience)
               ).call(
                 authenticator_input: authenticator_input
               )
@@ -232,18 +234,18 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
             subject do
               authenticator_input = Authentication::AuthenticatorInput.new(
                 authenticator_name: authenticator_name,
-                service_id:         nil,
-                account:            account,
-                username:           hostname,
-                credentials:        request_body(authenticate_gcp_token_request),
-                client_ip:          '127.0.0.1',
-                request:            authenticate_gcp_token_request
+                service_id: nil,
+                account: account,
+                username: hostname,
+                credentials: request_body(authenticate_gcp_token_request),
+                client_ip: '127.0.0.1',
+                request: authenticate_gcp_token_request
               )
 
               ::Authentication::AuthnGcp::UpdateAuthenticatorInput.new(
                 verify_and_decode_token: mocked_verify_and_decode_token,
                 validate_account_exists: mock_validate_account_exists(validation_succeeded: true),
-                decoded_token_class:     mocked_decoded_token_class(incorrect_account_audience)
+                decoded_token_class: mocked_decoded_token_class(incorrect_account_audience)
               ).call(
                 authenticator_input: authenticator_input
               )
@@ -263,18 +265,18 @@ RSpec.describe 'Authentication::AuthnGcp::UpdateAuthenticatorInput' do
           subject do
             authenticator_input = Authentication::AuthenticatorInput.new(
               authenticator_name: authenticator_name,
-              service_id:         nil,
-              account:            invalid_account,
-              username:           hostname,
-              credentials:        request_body(authenticate_gcp_token_request),
-              client_ip:          '127.0.0.1',
-              request:            authenticate_gcp_token_request
+              service_id: nil,
+              account: invalid_account,
+              username: hostname,
+              credentials: request_body(authenticate_gcp_token_request),
+              client_ip: '127.0.0.1',
+              request: authenticate_gcp_token_request
             )
 
             ::Authentication::AuthnGcp::UpdateAuthenticatorInput.new(
               verify_and_decode_token: mocked_verify_and_decode_token,
               validate_account_exists: mock_validate_account_exists(validation_succeeded: false),
-              decoded_token_class:     mocked_decoded_token_class(valid_audience)
+              decoded_token_class: mocked_decoded_token_class(valid_audience)
             ).call(
               authenticator_input: authenticator_input
             )

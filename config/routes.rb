@@ -16,12 +16,13 @@ Rails.application.routes.draw do
     get '/whoami' => 'status#whoami'
     get '/authenticators' => 'authenticate#index'
 
-    constraints id: /[^\/\?]+/ do
+    constraints id: /[^\/?]+/ do
       resources :accounts, only: [ :create, :index, :destroy ]
     end
 
-    constraints account: /[^\/\?]+/ do
-      constraints authenticator: /authn-?[^\/]*/, id: /[^\/\?]+/ do
+    constraints account: /[^\/?]+/ do
+      constraints authenticator: /authn-?[^\/]*/, id: /[^\/?]+/ do
+        get '/authn-jwt/:service_id/:account/status' => 'authenticate#authn_jwt_status'
         get '/:authenticator(/:service_id)/:account/status' => 'authenticate#status'
         
         patch '/:authenticator/:service_id/:account' => 'authenticate#update_config'
@@ -33,6 +34,7 @@ Rails.application.routes.draw do
         # i.e the request 'authn-oidc/:service_id/:account/authenticate' can be interpreted as
         # ':authenticator/:account/:id/authenticate'
         post '/authn-oidc(/:service_id)/:account/authenticate' => 'authenticate#authenticate_oidc'
+        post '/authn-jwt/:service_id/:account(/:id)/authenticate' => 'authenticate#authenticate_jwt'
         post '/authn-gcp/:account/authenticate' => 'authenticate#authenticate_gcp'
         post '/:authenticator(/:service_id)/:account/:id/authenticate' => 'authenticate#authenticate'
 
@@ -54,7 +56,6 @@ Rails.application.routes.draw do
       post    "/roles/:account/:kind/*identifier" => "roles#add_member", :constraints => QueryParameterActionRecognizer.new("members")
       delete  "/roles/:account/:kind/*identifier" => "roles#delete_member", :constraints => QueryParameterActionRecognizer.new("members")
       get     "/roles/:account/:kind/*identifier" => "roles#show"
-
 
       get     "/resources/:account/:kind/*identifier" => 'resources#check_permission', :constraints => QueryParameterActionRecognizer.new("check")
       get     "/resources/:account/:kind/*identifier" => 'resources#permitted_roles', :constraints => QueryParameterActionRecognizer.new("permitted_roles")

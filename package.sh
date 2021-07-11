@@ -10,7 +10,7 @@ chmod +x docker-debify
   --output=deb \
   possum \
   -- \
-  --depends tzdata \
+  --depends tzdata
 
 # Create possum rpm
 # The '--rpm-rpmbuild-define' flag is added to avoid packaging build
